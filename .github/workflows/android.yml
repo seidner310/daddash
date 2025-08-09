@@ -1,4 +1,4 @@
-name: Android APK (DadDash) — v2
+name: Android APK (DadDash) — v2 fixed
 
 on:
   workflow_dispatch:
@@ -26,10 +26,17 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Set up Android SDK
+      - name: Set up Android SDK (cmdline tools)
         uses: android-actions/setup-android@v3
 
-      - name: Install Gradle 8.7 (system)
+      - name: Install required Android SDK packages
+        run: |
+          yes | sdkmanager --licenses
+          sdkmanager "platform-tools" \
+                     "platforms;android-34" \
+                     "build-tools;34.0.0"
+
+      - name: Install Gradle 8.7
         run: |
           curl -s "https://get.sdkman.io" | bash
           source "$HOME/.sdkman/bin/sdkman-init.sh"
@@ -38,9 +45,11 @@ jobs:
 
       - name: Build debug APK
         working-directory: ${{ env.PROJECT_DIR }}
+        env:
+          ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
         run: |
           source "$HOME/.sdkman/bin/sdkman-init.sh"
-          gradle --no-daemon --stacktrace assembleDebug
+          gradle --no-daemon --info assembleDebug
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
