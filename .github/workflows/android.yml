@@ -1,4 +1,4 @@
-name: Android APK (DadDash) — Kotlin2 fix
+name: Android APK (DadDash) — Kotlin2 compose plugin fix
 on:
   workflow_dispatch:
   push:
@@ -14,7 +14,7 @@ jobs:
 
       - name: Unzip project
         run: |
-          sudo apt-get update && sudo apt-get install -y unzip curl zip
+          sudo apt-get update && sudo apt-get install -y unzip curl zip perl
           test -f DadDash-Compose.zip
           unzip -o DadDash-Compose.zip
           echo "PROJECT_DIR=DadDash-Compose" >> $GITHUB_ENV
@@ -35,16 +35,26 @@ jobs:
           sdk install gradle 8.7
           gradle -v
 
-      # 🔧 Patch Gradle for Kotlin 2 + Compose
-      - name: Apply Compose compiler plugin + remove old composeOptions
+      # 🔧 Patch Gradle for Compose plugin WITH version
+      - name: Patch Gradle files for Kotlin 2 + Compose plugin
         run: |
-          FILE="$PROJECT_DIR/app/build.gradle.kts"
-          # add plugin
-          sed -i 's/id("org.jetbrains.kotlin.android")/id("org.jetbrains.kotlin.android")\n    id("org.jetbrains.kotlin.plugin.compose")/' "$FILE"
-          # remove composeOptions block (not needed with plugin)
-          perl -0777 -pe 's/composeOptions\s*\{[^}]*\}//s' -i "$FILE"
-          echo "Patched $FILE:"
-          grep -n 'plugin.compose' -n "$FILE" || true
+          ROOT="$PROJECT_DIR/build.gradle.kts"
+          APP="$PROJECT_DIR/app/build.gradle.kts"
+
+          # Add compose plugin with explicit version to ROOT plugins block
+          sed -i '/id("org.jetbrains.kotlin.android") version "2.0.0" apply false/a\    id("org.jetbrains.kotlin.plugin.compose") version "2.0.0" apply false' "$ROOT"
+
+          # Apply compose plugin in APP module
+          sed -i 's/id("org.jetbrains.kotlin.android")/id("org.jetbrains.kotlin.android")\
+    id("org.jetbrains.kotlin.plugin.compose")/' "$APP"
+
+          # Remove any legacy composeOptions block (not needed with plugin)
+          perl -0777 -pe 's/composeOptions\s*\{[^}]*\}//s' -i "$APP"
+
+          echo "=== ROOT build.gradle.kts ==="
+          cat "$ROOT"
+          echo "=== APP build.gradle.kts ==="
+          cat "$APP"
 
       - name: Build debug APK
         working-directory: ${{ env.PROJECT_DIR }}
