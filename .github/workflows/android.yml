@@ -43,8 +43,7 @@ jobs:
 
           sed -i '/id("org.jetbrains.kotlin.android") version "2.0.0" apply false/a\    id("org.jetbrains.kotlin.plugin.compose") version "2.0.0" apply false' "$ROOT"
 
-          sed -i 's/id("org.jetbrains.kotlin.android")/id("org.jetbrains.kotlin.android")\
-    id("org.jetbrains.kotlin.plugin.compose")/' "$APP"
+          sed -i 's/id("org.jetbrains.kotlin.android")/id("org.jetbrains.kotlin.android")\id("org.jetbrains.kotlin.plugin.compose")/' "$APP"
 
           perl -0777 -pe 's/composeOptions\s*\{[^}]*\}//s' -i "$APP"
 
