@@ -1,10 +1,10 @@
-name: Android APK (DadDash) — Kotlin2 compose plugin fix
+name: Android APK (DadDash) — v2
 
 on:
   workflow_dispatch:
   push:
     paths:
-      - "DadDash-Compose.zip"
+      - "DadDash-Compose-v2.zip"
       - ".github/workflows/android.yml"
 
 jobs:
@@ -15,10 +15,10 @@ jobs:
 
       - name: Unzip project
         run: |
-          sudo apt-get update && sudo apt-get install -y unzip curl zip perl
-          test -f DadDash-Compose.zip
-          unzip -o DadDash-Compose.zip
-          echo "PROJECT_DIR=DadDash-Compose" >> $GITHUB_ENV
+          sudo apt-get update && sudo apt-get install -y unzip curl zip
+          test -f DadDash-Compose-v2.zip
+          unzip -o DadDash-Compose-v2.zip
+          echo "PROJECT_DIR=DadDash-Compose-v2" >> $GITHUB_ENV
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -29,28 +29,12 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Gradle 8.7 (SDKMAN)
+      - name: Install Gradle 8.7 (system)
         run: |
           curl -s "https://get.sdkman.io" | bash
           source "$HOME/.sdkman/bin/sdkman-init.sh"
           sdk install gradle 8.7
           gradle -v
-
-      - name: Patch Gradle files for Kotlin 2 + Compose plugin
-        run: |
-          ROOT="$PROJECT_DIR/build.gradle.kts"
-          APP="$PROJECT_DIR/app/build.gradle.kts"
-
-          sed -i '/id("org.jetbrains.kotlin.android") version "2.0.0" apply false/a\    id("org.jetbrains.kotlin.plugin.compose") version "2.0.0" apply false' "$ROOT"
-
-          sed -i 's/id("org.jetbrains.kotlin.android")/id("org.jetbrains.kotlin.android")\id("org.jetbrains.kotlin.plugin.compose")/' "$APP"
-
-          perl -0777 -pe 's/composeOptions\s*\{[^}]*\}//s' -i "$APP"
-
-          echo "=== ROOT build.gradle.kts ==="
-          cat "$ROOT"
-          echo "=== APP build.gradle.kts ==="
-          cat "$APP"
 
       - name: Build debug APK
         working-directory: ${{ env.PROJECT_DIR }}
