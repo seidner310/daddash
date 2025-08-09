@@ -1,4 +1,4 @@
-name: Android APK (DadDash)
+name: Android APK (DadDash) — no cache
 on:
   workflow_dispatch:
   push:
@@ -15,6 +15,7 @@ jobs:
       - name: Unzip project
         run: |
           sudo apt-get update && sudo apt-get install -y unzip
+          test -f DadDash-Compose.zip
           unzip -o DadDash-Compose.zip
           echo "PROJECT_DIR=DadDash-Compose" >> $GITHUB_ENV
 
@@ -24,14 +25,11 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Gradle cache
-        uses: gradle/actions/setup-gradle@v3
-
       - name: Build debug APK
         working-directory: ${{ env.PROJECT_DIR }}
         run: |
           chmod +x ./gradlew
-          ./gradlew assembleDebug
+          ./gradlew --no-daemon --stacktrace assembleDebug
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
