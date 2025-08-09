@@ -1,4 +1,4 @@
-name: Android APK (DadDash) — nocache + system Gradle
+name: Android APK (DadDash) — Kotlin2 fix
 on:
   workflow_dispatch:
   push:
@@ -34,6 +34,17 @@ jobs:
           source "$HOME/.sdkman/bin/sdkman-init.sh"
           sdk install gradle 8.7
           gradle -v
+
+      # 🔧 Patch Gradle for Kotlin 2 + Compose
+      - name: Apply Compose compiler plugin + remove old composeOptions
+        run: |
+          FILE="$PROJECT_DIR/app/build.gradle.kts"
+          # add plugin
+          sed -i 's/id("org.jetbrains.kotlin.android")/id("org.jetbrains.kotlin.android")\n    id("org.jetbrains.kotlin.plugin.compose")/' "$FILE"
+          # remove composeOptions block (not needed with plugin)
+          perl -0777 -pe 's/composeOptions\s*\{[^}]*\}//s' -i "$FILE"
+          echo "Patched $FILE:"
+          grep -n 'plugin.compose' -n "$FILE" || true
 
       - name: Build debug APK
         working-directory: ${{ env.PROJECT_DIR }}
